@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IconForge - Icon Generator</title>
+    <meta name="description" content="Generate app icons from images and text. Support for JPEG, PNG, BMP formats with PWA manifest generation.">
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#4F46E5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="IconForge">
+
+    <!-- Icons -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234F46E5'><path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'/></svg>" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234F46E5'><path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'/></svg>">
+
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- External Libraries -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app" class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="container">
+                <div class="header__content">
+                    <div class="header__brand">
+                        <svg class="header__icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"></polygon>
+                        </svg>
+                        <h1 class="header__title">IconForge</h1>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="container">
+                <!-- Upload Section -->
+                <section class="section upload-section">
+                    <div class="section__header">
+                        <h2 class="section__title">Generate Icons</h2>
+                        <p class="section__subtitle">Upload an image or create text-based icons</p>
+                    </div>
+
+                    <!-- Tab Navigation -->
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="upload" aria-label="Upload image tab">
+                            <i data-feather="upload"></i>
+                            <span>Upload Image</span>
+                        </button>
+                        <button class="tab-btn" data-tab="text" aria-label="Text icon tab">
+                            <i data-feather="type"></i>
+                            <span>Text Icon</span>
+                        </button>
+                    </div>
+
+                    <!-- Upload Tab -->
+                    <div class="tab-content active" id="upload-tab">
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-area__content">
+                                <i data-feather="image" class="upload-area__icon"></i>
+                                <h3 class="upload-area__title">Drop your image here</h3>
+                                <p class="upload-area__subtitle">or click to browse</p>
+                                <p class="upload-area__formats">Supports JPEG, PNG, BMP (max 10MB)</p>
+                            </div>
+                            <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.bmp" hidden>
+                        </div>
+                    </div>
+
+                    <!-- Text Tab -->
+                    <div class="tab-content" id="text-tab">
+                        <div class="text-icon-form">
+                            <div class="form-group">
+                                <label for="iconText" class="form-label">Icon Text</label>
+                                <input type="text" id="iconText" class="form-input" placeholder="Enter text (max 3 chars)" maxlength="3">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="textColor" class="form-label">Text Color</label>
+                                    <input type="color" id="textColor" class="form-input color-input" value="#ffffff">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bgColor" class="form-label">Background</label>
+                                    <input type="color" id="bgColor" class="form-input color-input" value="#4F46E5">
+                                </div>
+                            </div>
+                            <button id="generateTextIcon" class="btn btn-primary">
+                                <i data-feather="plus"></i>
+                                Generate Text Icon
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Preview Section -->
+                <section class="section preview-section" id="previewSection" style="display: none;">
+                    <div class="section__header">
+                        <h2 class="section__title">Icon Preview</h2>
+                        <p class="section__subtitle">Review your generated icons</p>
+                    </div>
+
+                    <div class="preview-grid" id="previewGrid">
+                        <!-- Icons will be generated here -->
+                    </div>
+
+                    <div class="actions">
+                        <button id="downloadAll" class="btn btn-primary">
+                            <i data-feather="download"></i>
+                            Download All Icons (ZIP)
+                        </button>
+                        <button id="downloadIndividual" class="btn btn-secondary">
+                            <i data-feather="folder"></i>
+                            Download Individual
+                        </button>
+                        <button id="generateManifest" class="btn btn-secondary">
+                            <i data-feather="file-text"></i>
+                            Generate PWA Manifest
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section class="section settings-section">
+                    <div class="section__header">
+                        <h2 class="section__title">Icon Settings</h2>
+                        <p class="section__subtitle">Customize your icon generation</p>
+                    </div>
+
+                    <div class="settings-grid">
+                        <div class="setting-group">
+                            <h3 class="setting-title">Icon Sizes</h3>
+                            <div class="checkbox-grid">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="iconSize" value="16" checked>
+                                    <span>16×16</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="iconSize" value="32" checked>
+                                    <span>32×32</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="iconSize" value="48" checked>
+                                    <span>48×48</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="iconSize" value="72" checked>
+                                    <span>72×72</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="iconSize" value="96" checked>
+                                    <span>96×96</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="iconSize" value="128" checked>
+                                    <span>128×128</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="iconSize" value="144" checked>
+                                    <span>144×144</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="iconSize" value="152" checked>
+                                    <span>152×152</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="iconSize" value="192" checked>
+                                    <span>192×192</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="iconSize" value="384" checked>
+                                    <span>384×384</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="iconSize" value="512" checked>
+                                    <span>512×512</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="iconSize" value="1024">
+                                    <span>1024×1024</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3 class="setting-title">Output Format</h3>
+                            <div class="radio-group">
+                                <label class="radio-item">
+                                    <input type="radio" name="format" value="png" checked>
+                                    <span>PNG</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="format" value="jpeg">
+                                    <span>JPEG</span>
+                                </label>
+                                <label class="radio-item">
+                                    <input type="radio" name="format" value="webp">
+                                    <span>WebP</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <p class="footer__text">IconForge - Professional Icon Generator PWA • Works Offline</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Generating icons...</p>
+        <div class="loading-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <span class="progress-text" id="progressText">0%</span>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+
+    <script>
+        // Initialize Feather Icons
+        feather.replace();
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('SW registered:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('SW registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

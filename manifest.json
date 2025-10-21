@@ -1,0 +1,53 @@
+{
+  "name": "IconForge - Professional Icon Generator",
+  "short_name": "IconForge",
+  "description": "Generate professional app icons from images and text. Supports JPEG, PNG, BMP with multiple output sizes and PWA manifest generation.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F9FAFB",
+  "theme_color": "#4F46E5",
+  "lang": "en-US",
+  "scope": "/",
+  "categories": ["productivity", "utilities", "graphics"],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "protocol_handlers": [
+    {
+      "protocol": "web+iconforge",
+      "url": "/?handler=%s"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/",
+      "accept": {
+        "image/jpeg": [".jpg", ".jpeg"],
+        "image/png": [".png"],
+        "image/bmp": [".bmp"]
+      },
+      "launch_type": "single-client"
+    }
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": ["focus-existing", "auto"]
+  },
+  "handle_links": "preferred",
+  "version": "1.0.0",
+  "generated_date": "2025-09-16T04:08:00.000Z",
+  "author": "IconForge PWA Generator",
+  "keywords": ["icon", "generator", "app", "png", "jpeg", "bmp", "pwa", "offline"]
+}
