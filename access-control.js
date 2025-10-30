@@ -1,9 +1,6 @@
 /**
  * Access Control - Enforce Hub Access Only
  * Add this file to your project and include it in index.html
- * 
- * Usage in index.html:
- * <script src="access-control.js"></script>
  */
 
 (function() {
@@ -15,18 +12,37 @@
   ];
 
   const HUB_URL = 'https://statelessplatform.com';
+  const MAX_REDIRECT_ATTEMPTS = 2; // Prevent infinite loops
+
+  function getRedirectAttempts() {
+    const attempts = sessionStorage.getItem('redirectAttempts') || '0';
+    return parseInt(attempts);
+  }
+
+  function incrementRedirectAttempts() {
+    const attempts = getRedirectAttempts() + 1;
+    sessionStorage.setItem('redirectAttempts', attempts.toString());
+  }
 
   function isAccessAllowed() {
     const currentOrigin = window.location.origin;
     const referrer = document.referrer;
-
-    // Check if accessed from allowed origin
+    
+    // Allow if same origin (localhost for dev)
     if (ALLOWED_ORIGINS.includes(currentOrigin)) {
       return true;
     }
 
-    // Check if referred from hub
-    if (referrer && ALLOWED_ORIGINS.some(origin => referrer.startsWith(origin))) {
+    // Check referrer
+    if (referrer && ALLOWED_ORIGINS.some(origin => referrer.includes(origin))) {
+      sessionStorage.removeItem('redirectAttempts');
+      return true;
+    }
+
+    // Check if opened from hub (sessionStorage flag)
+    const isFromHub = sessionStorage.getItem('hubReferrer') === 'statelessplatform.com';
+    if (isFromHub) {
+      sessionStorage.removeItem('redirectAttempts');
       return true;
     }
 
@@ -35,15 +51,23 @@
 
   function enforceHubAccess() {
     if (!isAccessAllowed()) {
-      console.warn('Direct access denied. Redirecting to hub...');
+      const attempts = getRedirectAttempts();
+
+      // Prevent infinite redirect loop
+      if (attempts >= MAX_REDIRECT_ATTEMPTS) {
+        console.error('Too many redirect attempts. Access denied.');
+        return;
+      }
+
+      incrementRedirectAttempts();
+      console.warn('Access denied. Redirecting to hub...');
       window.location.replace(HUB_URL);
+    } else {
+      // Access allowed, clear counter
+      sessionStorage.removeItem('redirectAttempts');
     }
   }
 
-  // Run on page load
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', enforceHubAccess);
-  } else {
-    enforceHubAccess();
-  }
+  // Run immediately (don't wait for DOMContentLoaded)
+  enforceHubAccess();
 })();
