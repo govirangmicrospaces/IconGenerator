@@ -1,6 +1,6 @@
 /**
- * IconForge - Icon Generator PWA (Updated)
- * Fixed ZIP file generation and PWA installation functionality
+ * IconForge - Icon Generator PWA (Complete with Font Controls)
+ * Includes ZIP file generation, PWA installation, and typography customization
  */
 
 'use strict';
@@ -17,17 +17,27 @@ class IconForgeApp {
 
     // Performance monitoring
     this.performanceMetrics = {
-      tapToFeedback: 100, // ms
-      navTransition: 1000, // ms
-      blockingOperation: 10000 // ms
+      tapToFeedback: 100,
+      navTransition: 1000,
+      blockingOperation: 10000
+    };
+
+    // Font weight name mappings
+    this.fontWeightNames = {
+      100: 'Thin',
+      200: 'Extra Light',
+      300: 'Light',
+      400: 'Normal',
+      500: 'Medium',
+      600: 'Semi Bold',
+      700: 'Bold',
+      800: 'Extra Bold',
+      900: 'Black'
     };
 
     this.init();
   }
 
-  /**
-   * Initialize the application
-   */
   async init() {
     try {
       await this.initIndexedDB();
@@ -41,9 +51,6 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Initialize IndexedDB for offline storage
-   */
   async initIndexedDB() {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open('IconForgeDB', 1);
@@ -57,7 +64,6 @@ class IconForgeApp {
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
 
-        // Create object stores
         if (!db.objectStoreNames.contains('icons')) {
           const iconStore = db.createObjectStore('icons', { keyPath: 'id', autoIncrement: true });
           iconStore.createIndex('timestamp', 'timestamp', { unique: false });
@@ -71,9 +77,6 @@ class IconForgeApp {
     });
   }
 
-  /**
-   * Bind all event listeners
-   */
   bindEventListeners() {
     // Tab navigation
     const tabBtns = document.querySelectorAll('.tab-btn');
@@ -97,6 +100,21 @@ class IconForgeApp {
     const generateTextBtn = document.getElementById('generateTextIcon');
     if (generateTextBtn) {
       generateTextBtn.addEventListener('click', () => this.generateTextIcon());
+    }
+
+    // Font weight slider with live update
+    const weightInput = document.getElementById('fontWeight');
+    const weightValue = document.getElementById('fontWeightValue');
+    const weightName = document.getElementById('fontWeightName');
+
+    if (weightInput && weightValue) {
+      weightInput.addEventListener('input', () => {
+        const weight = weightInput.value;
+        weightValue.textContent = weight;
+        if (weightName) {
+          weightName.textContent = this.fontWeightNames[weight] || '';
+        }
+      });
     }
 
     // Download actions
@@ -135,11 +153,7 @@ class IconForgeApp {
     document.addEventListener('keydown', (e) => this.handleKeyboardNavigation(e));
   }
 
-  /**
-   * Initialize PWA features with better error handling
-   */
   initPWAFeatures() {
-    // Handle install prompt
     window.addEventListener('beforeinstallprompt', (e) => {
       console.log('PWA install prompt available');
       e.preventDefault();
@@ -149,7 +163,6 @@ class IconForgeApp {
       this.showInstallInstructions();
     });
 
-    // Handle app installation
     window.addEventListener('appinstalled', () => {
       console.log('IconForge PWA installed successfully');
       this.hideInstallButton();
@@ -158,7 +171,6 @@ class IconForgeApp {
       this.deferredPrompt = null;
     });
 
-    // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches || 
         window.navigator.standalone === true) {
       console.log('PWA is already installed');
@@ -167,9 +179,6 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Show install button
-   */
   showInstallButton() {
     const installBtn = document.getElementById('installBtn');
     if (installBtn) {
@@ -178,9 +187,6 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Hide install button
-   */
   hideInstallButton() {
     const installBtn = document.getElementById('installBtn');
     if (installBtn) {
@@ -189,9 +195,6 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Show install instructions
-   */
   showInstallInstructions() {
     const installSection = document.getElementById('installInstructions');
     if (installSection) {
@@ -199,9 +202,6 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Hide install instructions
-   */
   hideInstallInstructions() {
     const installSection = document.getElementById('installInstructions');
     if (installSection) {
@@ -209,21 +209,15 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Switch between tabs with performance tracking
-   * @param {Event} event - Click event
-   */
   switchTab(event) {
     const startTime = performance.now();
 
     const clickedTab = event.currentTarget;
     const targetTab = clickedTab.dataset.tab;
 
-    // Remove active states
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-    // Add active states
     clickedTab.classList.add('active');
     const targetContent = document.getElementById(targetTab + '-tab');
     if (targetContent) {
@@ -237,36 +231,23 @@ class IconForgeApp {
       console.warn(`Tab switch exceeded budget: ${duration}ms`);
     }
 
-    // Provide haptic feedback on supported devices
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
     }
   }
 
-  /**
-   * Handle file drag over
-   * @param {DragEvent} event 
-   */
   handleDragOver(event) {
     event.preventDefault();
     const uploadArea = document.getElementById('uploadArea');
     uploadArea.classList.add('dragover');
   }
 
-  /**
-   * Handle file drag leave
-   * @param {DragEvent} event 
-   */
   handleDragLeave(event) {
     event.preventDefault();
     const uploadArea = document.getElementById('uploadArea');
     uploadArea.classList.remove('dragover');
   }
 
-  /**
-   * Handle file drop with immediate feedback
-   * @param {DragEvent} event 
-   */
   handleFileDrop(event) {
     const startTime = performance.now();
 
@@ -279,7 +260,6 @@ class IconForgeApp {
       this.processFile(files[0]);
     }
 
-    // Ensure feedback within 100ms
     const feedbackTime = performance.now() - startTime;
     if (feedbackTime < this.performanceMetrics.tapToFeedback) {
       setTimeout(() => this.showFeedback('File received'), 
@@ -287,10 +267,6 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Handle file selection
-   * @param {Event} event 
-   */
   handleFileSelect(event) {
     const file = event.target.files[0];
     if (file) {
@@ -298,33 +274,24 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Process uploaded file with progress indication
-   * @param {File} file - Selected file
-   */
   async processFile(file) {
     try {
-      // Validate file type and size
       if (!this.validateFile(file)) {
         return;
       }
 
       this.showLoading('Processing image...', 0);
 
-      // Create image from file
       this.updateProgress(20, 'Loading image...');
       const image = await this.createImageFromFile(file);
       this.currentImage = image;
 
-      // Generate icons
       this.updateProgress(50, 'Generating icons...');
       await this.generateIcons(image);
 
-      // Show preview
       this.updateProgress(90, 'Preparing preview...');
       this.showPreview();
 
-      // Store in IndexedDB
       await this.storeImageData(file, image);
 
       this.updateProgress(100, 'Complete!');
@@ -340,11 +307,6 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Update progress indicator
-   * @param {number} percent - Progress percentage
-   * @param {string} message - Progress message
-   */
   updateProgress(percent, message) {
     const progressFill = document.getElementById('progressFill');
     const progressText = document.getElementById('progressText');
@@ -361,14 +323,9 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Validate uploaded file
-   * @param {File} file - File to validate
-   * @returns {boolean} - Is valid
-   */
   validateFile(file) {
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/bmp'];
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 50 * 1024 * 1024;
 
     if (!validTypes.includes(file.type)) {
       this.showError('Please select a valid image file (JPEG, PNG, BMP)');
@@ -383,11 +340,6 @@ class IconForgeApp {
     return true;
   }
 
-  /**
-   * Create image from file
-   * @param {File} file - Image file
-   * @returns {Promise<HTMLImageElement>} - Loaded image
-   */
   createImageFromFile(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -405,13 +357,17 @@ class IconForgeApp {
   }
 
   /**
-   * Generate text-based icon
+   * Generate text-based icon with font customization
    */
   async generateTextIcon() {
     try {
       const text = document.getElementById('iconText').value.trim();
       const textColor = document.getElementById('textColor').value;
       const bgColor = document.getElementById('bgColor').value;
+      const fontFamily = document.getElementById('fontFamily')?.value || 'Inter, Arial, sans-serif';
+      const fontStyle = document.getElementById('fontStyle')?.value || 'normal';
+      let fontWeight = parseInt(document.getElementById('fontWeight')?.value || '700', 10);
+      fontWeight = Math.min(900, Math.max(100, Math.round(fontWeight / 100) * 100));
 
       if (!text) {
         this.showError('Please enter text for the icon');
@@ -423,39 +379,58 @@ class IconForgeApp {
         return;
       }
 
-      this.showLoading('Generating text icon...', 0);
+      this.showLoading('Generating text icon...', 10);
 
-      // Create text image
+      // Wait for fonts to be ready
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
+      }
+
+      const baseSize = 512;
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
+      canvas.width = baseSize;
+      canvas.height = baseSize;
 
-      canvas.width = 512;
-      canvas.height = 512;
-
-      // Fill background
+      // Background fill
       ctx.fillStyle = bgColor;
-      ctx.fillRect(0, 0, 512, 512);
+      ctx.fillRect(0, 0, baseSize, baseSize);
 
-      // Draw text
-      ctx.fillStyle = textColor;
-      ctx.font = 'bold 300px Inter, Arial, sans-serif';
+      // Text properties
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(text, 256, 256);
+      ctx.fillStyle = textColor;
+
+      // Fit font size to canvas with padding
+      const padding = 48;
+      const fittedPx = this.fitTextToCanvas(
+        ctx, 
+        text, 
+        baseSize - 2 * padding, 
+        baseSize - 2 * padding, 
+        fontStyle, 
+        fontWeight, 
+        fontFamily
+      );
+
+      ctx.font = this.buildCanvasFont(fontStyle, fontWeight, fittedPx, fontFamily);
+
+      // Draw text centered
+      ctx.fillText(text, baseSize / 2, baseSize / 2);
 
       // Convert to image
       const image = new Image();
       image.onload = async () => {
         this.currentImage = image;
-        this.updateProgress(50, 'Generating icons...');
+        this.updateProgress(60, 'Generating icons...');
         await this.generateIcons(image, 'text');
-        this.updateProgress(90, 'Preparing preview...');
+        this.updateProgress(95, 'Preparing preview...');
         this.showPreview();
         this.updateProgress(100, 'Complete!');
         setTimeout(() => {
           this.hideLoading();
           this.showSuccess('Text icon generated successfully!');
-        }, 500);
+        }, 250);
       };
       image.src = canvas.toDataURL();
 
@@ -467,10 +442,39 @@ class IconForgeApp {
   }
 
   /**
-   * Generate icons in multiple sizes with progress tracking
-   * @param {HTMLImageElement} sourceImage - Source image
-   * @param {string} type - Icon type ('upload' or 'text')
+   * Build CSS font string for canvas
    */
+  buildCanvasFont(style, weight, sizePx, family) {
+    return `${style} ${weight} ${Math.max(12, Math.floor(sizePx))}px ${family}`;
+  }
+
+  /**
+   * Fit text to canvas using binary search and measureText
+   */
+  fitTextToCanvas(ctx, text, maxW, maxH, style, weight, family) {
+    let lo = 12;
+    let hi = 420;
+    let best = lo;
+
+    for (let i = 0; i < 14; i++) {
+      const mid = Math.floor((lo + hi) / 2);
+      ctx.font = `${style} ${weight} ${mid}px ${family}`;
+      const metrics = ctx.measureText(text);
+      const width = metrics.width;
+      const ascent = metrics.actualBoundingBoxAscent ?? mid * 0.8;
+      const descent = metrics.actualBoundingBoxDescent ?? mid * 0.2;
+      const height = ascent + descent;
+
+      if (width <= maxW && height <= maxH) {
+        best = mid;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+    return best;
+  }
+
   async generateIcons(sourceImage, type = 'upload') {
     const selectedSizes = this.getSelectedSizes();
     const format = this.getSelectedFormat();
@@ -479,7 +483,7 @@ class IconForgeApp {
 
     for (let i = 0; i < selectedSizes.length; i++) {
       const size = selectedSizes[i];
-      const progress = 50 + (i / selectedSizes.length) * 30; // 50-80%
+      const progress = 50 + (i / selectedSizes.length) * 30;
       this.updateProgress(progress, `Creating ${size}×${size} icon...`);
 
       const canvas = document.createElement('canvas');
@@ -488,14 +492,11 @@ class IconForgeApp {
       canvas.width = size;
       canvas.height = size;
 
-      // Enable image smoothing for better quality
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
 
-      // Draw resized image
       ctx.drawImage(sourceImage, 0, 0, size, size);
 
-      // Convert to desired format
       let mimeType = 'image/png';
       let quality = 1.0;
 
@@ -521,40 +522,26 @@ class IconForgeApp {
         filename: `icon-${size}x${size}.${format}`
       });
 
-      // Small delay to prevent UI blocking
       await new Promise(resolve => setTimeout(resolve, 10));
     }
   }
 
-  /**
-   * Get selected icon sizes
-   * @returns {number[]} - Array of selected sizes
-   */
   getSelectedSizes() {
     const checkboxes = document.querySelectorAll('input[name="iconSize"]:checked');
     return Array.from(checkboxes).map(cb => parseInt(cb.value));
   }
 
-  /**
-   * Get selected output format
-   * @returns {string} - Selected format
-   */
   getSelectedFormat() {
     const radio = document.querySelector('input[name="format"]:checked');
     return radio ? radio.value : 'png';
   }
 
-  /**
-   * Show icon preview with download buttons
-   */
   showPreview() {
     const previewSection = document.getElementById('previewSection');
     const previewGrid = document.getElementById('previewGrid');
 
-    // Clear existing previews
     previewGrid.innerHTML = '';
 
-    // Create preview items
     this.generatedIcons.forEach((icon, index) => {
       const previewItem = document.createElement('div');
       previewItem.className = 'preview-item';
@@ -572,7 +559,6 @@ class IconForgeApp {
       previewGrid.appendChild(previewItem);
     });
 
-    // Bind download single buttons
     document.querySelectorAll('.download-single').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const index = parseInt(e.currentTarget.dataset.index);
@@ -580,23 +566,16 @@ class IconForgeApp {
       });
     });
 
-    // Replace feather icons
     feather.replace();
 
-    // Show preview section
     previewSection.style.display = 'block';
     previewSection.scrollIntoView({ behavior: 'smooth' });
   }
 
-  /**
-   * Download single icon
-   * @param {number} index - Icon index
-   */
   downloadSingle(index) {
     const icon = this.generatedIcons[index];
     if (!icon) return;
 
-    // Convert data URL to blob for better download
     fetch(icon.dataUrl)
       .then(res => res.blob())
       .then(blob => {
@@ -616,16 +595,12 @@ class IconForgeApp {
       });
   }
 
-  /**
-   * Download all generated icons as a proper ZIP file using JSZip
-   */
   async downloadAllIcons() {
     if (this.generatedIcons.length === 0) {
       this.showError('No icons to download');
       return;
     }
 
-    // Check if JSZip is available
     if (typeof JSZip === 'undefined') {
       this.showError('JSZip library not loaded. Please refresh the page.');
       return;
@@ -634,27 +609,21 @@ class IconForgeApp {
     try {
       this.showLoading('Creating ZIP file...', 0);
 
-      // Create new JSZip instance
       const zip = new JSZip();
 
-      // Add each icon to the ZIP
       for (let i = 0; i < this.generatedIcons.length; i++) {
         const icon = this.generatedIcons[i];
-        const progress = (i / this.generatedIcons.length) * 80; // 0-80%
+        const progress = (i / this.generatedIcons.length) * 80;
         this.updateProgress(progress, `Adding ${icon.filename}...`);
 
-        // Convert data URL to binary data
         const response = await fetch(icon.dataUrl);
         const blob = await response.blob();
 
-        // Add to ZIP
         zip.file(icon.filename, blob);
 
-        // Small delay to prevent UI blocking
         await new Promise(resolve => setTimeout(resolve, 50));
       }
 
-      // Create manifest file
       this.updateProgress(85, 'Creating manifest...');
       const manifest = {
         name: "IconForge Generated Icons",
@@ -672,7 +641,6 @@ class IconForgeApp {
 
       zip.file('manifest.json', JSON.stringify(manifest, null, 2));
 
-      // Generate ZIP file
       this.updateProgress(90, 'Generating ZIP...');
       const zipBlob = await zip.generateAsync({
         type: 'blob',
@@ -680,7 +648,6 @@ class IconForgeApp {
         compressionOptions: { level: 6 }
       });
 
-      // Download ZIP
       this.updateProgress(95, 'Downloading...');
       const link = document.createElement('a');
       const timestamp = new Date().toISOString().slice(0, 16).replace(/[:-]/g, '');
@@ -690,7 +657,6 @@ class IconForgeApp {
       link.click();
       document.body.removeChild(link);
 
-      // Cleanup
       URL.revokeObjectURL(link.href);
 
       this.updateProgress(100, 'Complete!');
@@ -706,9 +672,6 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Toggle individual download mode
-   */
   toggleIndividualDownload() {
     const downloadBtns = document.querySelectorAll('.download-single');
     const areVisible = downloadBtns.length > 0 && downloadBtns[0].style.display !== 'none';
@@ -718,14 +681,14 @@ class IconForgeApp {
     });
 
     const toggleBtn = document.getElementById('downloadIndividual');
-    toggleBtn.querySelector('span').textContent = areVisible ? 'Show Download Buttons' : 'Hide Download Buttons';
+    const btnText = toggleBtn.querySelector('span');
+    if (btnText) {
+      btnText.textContent = areVisible ? 'Show Download Buttons' : 'Hide Download Buttons';
+    }
 
     this.showFeedback(areVisible ? 'Download buttons hidden' : 'Download buttons shown');
   }
 
-  /**
-   * Generate PWA manifest file
-   */
   generatePWAManifest() {
     if (this.generatedIcons.length === 0) {
       this.showError('Generate icons first');
@@ -742,7 +705,7 @@ class IconForgeApp {
       background_color: "#ffffff",
       theme_color: "#4F46E5",
       icons: this.generatedIcons
-        .filter(icon => icon.size >= 72) // Only include icons 72px and larger for PWA
+        .filter(icon => icon.size >= 72)
         .map(icon => ({
           src: icon.filename,
           sizes: `${icon.size}x${icon.size}`,
@@ -751,7 +714,6 @@ class IconForgeApp {
         }))
     };
 
-    // Download manifest
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(manifest, null, 2));
     const link = document.createElement('a');
     link.href = dataStr;
@@ -763,22 +725,16 @@ class IconForgeApp {
     this.showSuccess('PWA manifest.json generated and downloaded!');
   }
 
-  /**
-   * Install PWA with better error handling
-   */
   async installPWA() {
     if (!this.deferredPrompt) {
-      // Show manual installation instructions
       this.showInstallInstructions();
       this.showFeedback('Use your browser\'s install option or "Add to Home Screen"');
       return;
     }
 
     try {
-      // Show the install prompt
       this.deferredPrompt.prompt();
 
-      // Wait for user choice
       const result = await this.deferredPrompt.userChoice;
 
       if (result.outcome === 'accepted') {
@@ -789,7 +745,6 @@ class IconForgeApp {
         this.showFeedback('Installation cancelled');
       }
 
-      // Clear the prompt
       this.deferredPrompt = null;
       this.isInstallable = false;
 
@@ -799,9 +754,6 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Update settings and persist to IndexedDB
-   */
   async updateSettings() {
     const settings = {
       selectedSizes: this.getSelectedSizes(),
@@ -817,34 +769,23 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Handle online/offline status
-   * @param {boolean} isOnline - Connection status
-   */
   handleOnlineStatus(isOnline) {
     this.isOffline = !isOnline;
 
     const statusMessage = isOnline ? 'Back online - full functionality restored' : 'Working offline - limited functionality';
     this.showFeedback(statusMessage);
 
-    // Update footer text
     const footerText = document.querySelector('.footer__text');
     if (footerText) {
       footerText.textContent = `IconForge - Professional Icon Generator PWA • ${isOnline ? 'Online' : 'Offline'}`;
     }
 
     if (isOnline) {
-      // Sync any pending data
       this.syncPendingData();
     }
   }
 
-  /**
-   * Handle keyboard navigation
-   * @param {KeyboardEvent} event 
-   */
   handleKeyboardNavigation(event) {
-    // Tab navigation shortcuts
     if (event.ctrlKey || event.metaKey) {
       switch (event.key) {
         case '1':
@@ -866,17 +807,11 @@ class IconForgeApp {
       }
     }
 
-    // Escape key to close modals
     if (event.key === 'Escape') {
       this.hideLoading();
     }
   }
 
-  /**
-   * Store image data in IndexedDB
-   * @param {File} file - Original file
-   * @param {HTMLImageElement} image - Processed image
-   */
   async storeImageData(file, image) {
     if (!this.db) return;
 
@@ -889,7 +824,7 @@ class IconForgeApp {
         type: file.type,
         size: file.size,
         timestamp: Date.now(),
-        imageData: image.src.substring(0, 1000) // Store preview only
+        imageData: image.src.substring(0, 1000)
       };
 
       await new Promise((resolve, reject) => {
@@ -902,10 +837,6 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Store settings in IndexedDB
-   * @param {Object} settings - Settings object
-   */
   async storeSettings(settings) {
     if (!this.db) return;
 
@@ -923,14 +854,10 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Load persisted data from IndexedDB
-   */
   async loadPersistedData() {
     if (!this.db) return;
 
     try {
-      // Load settings
       const transaction = this.db.transaction(['settings'], 'readonly');
       const store = transaction.objectStore('settings');
 
@@ -948,12 +875,7 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Apply loaded settings
-   * @param {Object} settings - Settings to apply
-   */
   applySettings(settings) {
-    // Apply size selections
     if (settings.selectedSizes && settings.selectedSizes.length > 0) {
       const sizeCheckboxes = document.querySelectorAll('input[name="iconSize"]');
       sizeCheckboxes.forEach(cb => {
@@ -961,7 +883,6 @@ class IconForgeApp {
       });
     }
 
-    // Apply format selection
     if (settings.outputFormat) {
       const formatRadio = document.querySelector(`input[name="format"][value="${settings.outputFormat}"]`);
       if (formatRadio) {
@@ -970,19 +891,10 @@ class IconForgeApp {
     }
   }
 
-  /**
-   * Sync pending data when back online
-   */
   async syncPendingData() {
     console.log('Syncing pending data...');
-    // Implementation for syncing offline changes
   }
 
-  /**
-   * Show loading overlay with progress
-   * @param {string} message - Loading message
-   * @param {number} progress - Progress percentage
-   */
   showLoading(message = 'Processing...', progress = 0) {
     const overlay = document.getElementById('loadingOverlay');
     const text = overlay.querySelector('.loading-text');
@@ -992,43 +904,23 @@ class IconForgeApp {
     overlay.style.display = 'flex';
   }
 
-  /**
-   * Hide loading overlay
-   */
   hideLoading() {
     const overlay = document.getElementById('loadingOverlay');
     overlay.style.display = 'none';
   }
 
-  /**
-   * Show success message
-   * @param {string} message - Success message
-   */
   showSuccess(message) {
     this.showNotification(message, 'success');
   }
 
-  /**
-   * Show error message
-   * @param {string} message - Error message
-   */
   showError(message) {
     this.showNotification(message, 'error');
   }
 
-  /**
-   * Show feedback message
-   * @param {string} message - Feedback message
-   */
   showFeedback(message) {
     this.showNotification(message, 'info');
   }
 
-  /**
-   * Show notification
-   * @param {string} message - Notification message
-   * @param {string} type - Notification type (success, error, info)
-   */
   showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification notification--${type}`;
@@ -1042,7 +934,6 @@ class IconForgeApp {
     document.body.appendChild(notification);
     feather.replace();
 
-    // Auto remove after 4 seconds
     setTimeout(() => {
       notification.classList.add('notification--fade');
       setTimeout(() => {
@@ -1053,11 +944,6 @@ class IconForgeApp {
     }, 4000);
   }
 
-  /**
-   * Get notification icon based on type
-   * @param {string} type - Notification type
-   * @returns {string} - Feather icon name
-   */
   getNotificationIcon(type) {
     switch (type) {
       case 'success': return 'check-circle';
@@ -1068,13 +954,12 @@ class IconForgeApp {
   }
 }
 
-// Initialize app when DOM is loaded
+// Initialize app
 let app;
 document.addEventListener('DOMContentLoaded', () => {
   app = new IconForgeApp();
 });
 
-// Expose app globally for inline event handlers and debugging
 window.app = app;
 
 // Service Worker messaging
